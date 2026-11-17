@@ -1,0 +1,149 @@
+name: Publish the Marketplace
+
+# Reads every plugin repository plugins.yaml lists or discovers, checks each
+# release's signature, writes index.json signed with the index key and
+# publishes it with GitHub Pages next to the archives:
+#   https://bitsandbricks-ch.github.io/floorbit-plugins/index.json
+# Then downloads that index and everything it offers and checks them the way a
+# Floorbit installing them would (scripts/marketplace.py check).
+# Runs on changes here, every hour (new releases and new plugin repositories),
+# by hand, and when a plugin repository sends a "plugin-released" dispatch.
+# Pull requests only check plugins.yaml.
+#
+# Keys have a purpose. The plugins are signed with the plugin key in their own
+# repositories; this repository signs only the index, with the index key
+# (Floorbit's floorbit/keys/index/). Only the index job sees it, as the
+# environment secret FLOORBIT_INDEX_SIGNING_KEY of "plugin-signing" (not an
+# organisation or repository secret, which every job could read; limit the
+# environment to the branch main, with no required reviewer: it runs every
+# hour). That job runs no npm and no third-party action.
+#
+# The tools come from Floorbit itself, at the commit in FLOORBIT_REF, so the
+# index is checked by the same code that installs from it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [plugin-released]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || 'pages' }}
+  cancel-in-progress: false
+
+env:
+  INDEX_URL: https://bitsandbricks-ch.github.io/floorbit-plugins/index.json
+
+jobs:
+  lint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: plugins.yaml
+        run: |
+          python3 - <<'PY'
+          import re, sys, yaml
+          doc = yaml.safe_load(open("plugins.yaml")) or {}
+          problems = []
+          for d in doc.get("discover") or []:
+              if set(d) != {"owner", "prefix"}:
+                  problems.append(f"discover: {d!r} needs owner and prefix")
+          for p in doc.get("plugins") or []:
+              if not re.fullmatch(r"[\w.-]+/floorbit-plugin-[a-z0-9-]+", str(p.get("repo", ""))):
+                  problems.append(f"plugins: bad repo {p.get('repo')!r}")
+              for v, why in (p.get("withdrawn") or {}).items():
+                  if not str(why).strip():
+                      problems.append(f"{p['repo']} {v}: say why it was withdrawn")
+          if problems:
+              sys.exit("\n".join(problems))
+          print("plugins.yaml is fine")
+          PY
+
+  index:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    environment: plugin-signing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: ref
+        run: echo "sha=$(tr -d '[:space:]' < FLOORBIT_REF)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bitsandbricks-ch/floorbit
+          ref: ${{ steps.ref.outputs.sha }}
+          path: floorbit
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install -r floorbit/requirements.txt
+      - name: Build the signed index
+        env:
+          INDEX_KEY: ${{ secrets.FLOORBIT_INDEX_SIGNING_KEY }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$INDEX_KEY" ]; then echo "::error::add FLOORBIT_INDEX_SIGNING_KEY to the plugin-signing environment"; exit 1; fi
+          key="$RUNNER_TEMP/key.pem"
+          trap 'rm -f "$key"' EXIT
+          (umask 077 && printf '%s\n' "$INDEX_KEY" > "$key")
+          python floorbit/scripts/marketplace.py build-index plugins.yaml site --key "$key"
+          cp README.md site/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: site/
+          retention-days: 1
+
+  deploy:
+    needs: index
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: site
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  check:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: ref
+        run: echo "sha=$(tr -d '[:space:]' < FLOORBIT_REF)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bitsandbricks-ch/floorbit
+          ref: ${{ steps.ref.outputs.sha }}
+          path: floorbit
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install -r floorbit/requirements.txt
+      - name: Download and verify what Pages serves
+        # A fresh query string, so the Pages CDN can't answer with an older index.
+        run: python floorbit/scripts/marketplace.py check "$INDEX_URL?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

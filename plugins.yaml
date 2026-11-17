@@ -1,0 +1,11 @@
+# The official Floorbit Marketplace: every plugin lives in its own repository and
+# its signed GitHub releases are the versions (Floorbit's docs/marketplace.md).
+name: Floorbit Marketplace
+description: Plugins made by the Floorbit project, signed with the Floorbit plugin key
+# Every public repository named floorbit-plugin-* of bitsandbricks-ch is included
+# by itself, so a new plugin repository shows up on the next run.
+discover:
+  - {owner: bitsandbricks-ch, prefix: floorbit-plugin-}
+# List a repository only to withdraw a version (never delete a release):
+#   - {repo: bitsandbricks-ch/floorbit-plugin-x, withdrawn: {"1.2.0": "why"}}
+plugins: []
