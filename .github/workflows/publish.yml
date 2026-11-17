@@ -20,8 +20,6 @@ name: Publish the Marketplace
 #
 # The tools come from Floorbit itself, at the commit in FLOORBIT_REF, so the
 # index is checked by the same code that installs from it.
-#   FLOORBIT_READ_TOKEN  only while bitsandbricks-ch/floorbit is private: a
-#                        token that can read it (Contents: read)
 on:
   push:
     branches: [main]
@@ -85,7 +83,6 @@ jobs:
           repository: bitsandbricks-ch/floorbit
           ref: ${{ steps.ref.outputs.sha }}
           path: floorbit
-          token: ${{ secrets.FLOORBIT_READ_TOKEN || github.token }}
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -142,7 +139,6 @@ jobs:
           repository: bitsandbricks-ch/floorbit
           ref: ${{ steps.ref.outputs.sha }}
           path: floorbit
-          token: ${{ secrets.FLOORBIT_READ_TOKEN || github.token }}
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:

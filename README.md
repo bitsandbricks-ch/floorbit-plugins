@@ -35,7 +35,6 @@ Floorbit's [docs/marketplace.md](https://github.com/bitsandbricks-ch/floorbit/bl
 - **Pages:** Settings > Pages > Source: *GitHub Actions*.
 - **Environment `plugin-signing`:** the secret `FLOORBIT_INDEX_SIGNING_KEY` (the private key of
   Floorbit's `floorbit/keys/index/index.pub`). Limit the environment to the branch `main`.
-- `FLOORBIT_READ_TOKEN`, only while bitsandbricks-ch/floorbit is private: a token that can read it.
 
 The tools come from Floorbit itself at the commit in [`FLOORBIT_REF`](FLOORBIT_REF), so the index is
 built and checked by the code that installs from it.
