@@ -4,6 +4,10 @@ These rules are for AI coding agents (Claude Code, Codex, Copilot, ...) working 
 Humans: the same rules apply to you in spirit.
 `CLAUDE.md` imports this file.
 
+This repo follows the [BitsAndBricks handbook](https://github.com/bitsandbricks-ch/handbook),
+profile **marketplace** (see `.mason.toml`). Read its core chapters and the blocks that profile lists.
+Where this file differs from the handbook, this file wins for this repo.
+
 ## What this is
 
 The official Floorbit Marketplace: a signed `index.json` built from the releases of the `floorbit-plugin-*` repositories listed by `plugins.yaml`. The [README](README.md) says where things are and how it works.
