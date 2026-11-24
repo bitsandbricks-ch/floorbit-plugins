@@ -1,0 +1,8 @@
+# Mason (the `mason` command and the web app) reads this file. The org's defaults
+# (bitsandbricks-ch/.mason) say what every repo should look like; this file has the last
+# word for this repo. Review changes to it like code.
+#
+# The Marketplace index has no releases: merging to main publishes it.
+[handbook]
+profile = "plugin"
+version = "v1"
