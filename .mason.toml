@@ -4,5 +4,5 @@
 #
 # The Marketplace index has no releases: merging to main publishes it.
 [handbook]
-profile = "plugin"
+profile = "marketplace"
 version = "v1"
