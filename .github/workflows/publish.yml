@@ -4,11 +4,13 @@ name: Publish the Marketplace
 # release's signature, writes index.json signed with the index key and
 # publishes it with GitHub Pages next to the archives:
 #   https://bitsandbricks-ch.github.io/floorbit-plugins/index.json
+# It also builds applications.json, Floorbit's own rules list, from games.yaml,
+# signed with the same index key (scripts/marketplace.py build-applications).
 # Then downloads that index and everything it offers and checks them the way a
 # Floorbit installing them would (scripts/marketplace.py check).
 # Runs on changes here, every hour (new releases and new plugin repositories),
 # by hand, and when a plugin repository sends a "plugin-released" dispatch.
-# Pull requests only check plugins.yaml.
+# Pull requests only check plugins.yaml and games.yaml.
 #
 # Keys have a purpose. The plugins are signed with the plugin key in their own
 # repositories; this repository signs only the index, with the index key
@@ -67,6 +69,20 @@ jobs:
               sys.exit("\n".join(problems))
           print("plugins.yaml is fine")
           PY
+      - name: games.yaml
+        # Only its shape here: the entries are checked by Floorbit's own code when the list is built.
+        run: |
+          python3 - <<'PY'
+          import sys, yaml
+          doc = yaml.safe_load(open("games.yaml")) or {}
+          apps = doc.get("applications") if isinstance(doc, dict) else None
+          if not isinstance(apps, list) or not all(isinstance(a, dict) for a in apps):
+              sys.exit("games.yaml: applications must be a list of entries")
+          ids = [a.get("id") for a in apps]
+          if len(ids) != len(set(ids)):
+              sys.exit("games.yaml: an id is listed twice")
+          print(f"games.yaml is fine: {len(apps)} applications")
+          PY
 
   index:
     if: github.event_name != 'pull_request'
@@ -98,6 +114,7 @@ jobs:
           trap 'rm -f "$key"' EXIT
           (umask 077 && printf '%s\n' "$INDEX_KEY" > "$key")
           python floorbit/scripts/marketplace.py build-index plugins.yaml site --key "$key"
+          python floorbit/scripts/marketplace.py build-applications games.yaml site --key "$key"
           cp README.md site/
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
