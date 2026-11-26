@@ -1,0 +1,19 @@
+# Floorbit's own rules list: the games, launchers and site groups every Floorbit knows.
+# The publish workflow checks each entry the way a Floorbit checks a rules file, signs the list with
+# the index key and publishes it as applications.json next to index.json:
+#   https://bitsandbricks-ch.github.io/floorbit-plugins/applications.json
+# One bad entry stops the build. Floorbit's docs/applications.md describes the fields.
+#
+# Add only what you have checked against real traffic or the publisher's own documentation, and
+# say where it comes from in the pull request. An entry looks like this (example values):
+#
+#   - id: example-arena          # lower case, digits and dashes; the same id as a built-in entry replaces it
+#     name: Example Arena
+#     kind: game                 # game | launcher | sitegroup
+#     category: gaming
+#     part_of: steam             # the launcher it runs from, if any
+#     sites: [example.com]       # domains; Floorbit matches by the registered domain
+#                                # (arena.example.com counts as example.com)
+#     ports: [udp/7777]          # protocol/port or protocol/from-to
+#     cidr: [198.51.100.0/28]
+applications: []

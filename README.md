@@ -30,6 +30,22 @@ Floorbit's [docs/marketplace.md](https://github.com/bitsandbricks-ch/floorbit/bl
 | Shelly power meters | [floorbit-plugin-shelly](https://github.com/bitsandbricks-ch/floorbit-plugin-shelly) |
 | Home Assistant power | [floorbit-plugin-home-assistant](https://github.com/bitsandbricks-ch/floorbit-plugin-home-assistant) |
 
+## Floorbit's own rules list
+
+The same workflow builds **https://bitsandbricks-ch.github.io/floorbit-plugins/applications.json**,
+the games, launchers and site groups every Floorbit knows, from [`games.yaml`](games.yaml). It is
+signed with the index key, and Floorbit lists it as its last rule source, on by default. Floorbit's
+[docs/applications.md](https://github.com/bitsandbricks-ch/floorbit/blob/master/docs/applications.md)
+says how it is used.
+
+To add or change a game, open a pull request on `games.yaml`:
+
+- Add only what you have checked against real traffic or the publisher's own documentation, and say
+  in the pull request where it comes from. Nothing made up, nothing guessed.
+- Use the `id` of a built-in entry to replace it; a new `id` adds one.
+- The build checks every entry the way a Floorbit checks a rules file. One bad entry stops it, and
+  the last published list stays.
+
 ## Setting it up (once)
 
 - **Pages:** Settings > Pages > Source: *GitHub Actions*.
