@@ -33,18 +33,21 @@ Floorbit's [docs/marketplace.md](https://github.com/bitsandbricks-ch/floorbit/bl
 ## Floorbit's own rules list
 
 The same workflow builds **https://bitsandbricks-ch.github.io/floorbit-plugins/applications.json**,
-the games, launchers and site groups every Floorbit knows, from [`games.yaml`](games.yaml). It is
+the games, launchers and site groups every Floorbit knows, from [`games/`](games/), one file per application. It is
 signed with the index key, and Floorbit lists it as its last rule source, on by default. Floorbit's
 [docs/applications.md](https://github.com/bitsandbricks-ch/floorbit/blob/master/docs/applications.md)
 says how it is used.
 
-To add or change a game, open a pull request on `games.yaml`:
+To add or change a game, open a pull request with `games/<id>.yaml` ([games/README.md](games/README.md)
+shows the fields). A Floorbit's Share button on an application opens that pull request prefilled.
 
 - Add only what you have checked against real traffic or the publisher's own documentation, and say
-  in the pull request where it comes from. Nothing made up, nothing guessed.
+  where it comes from in `source:`. Nothing made up, nothing guessed.
 - Use the `id` of a built-in entry to replace it; a new `id` adds one.
-- The build checks every entry the way a Floorbit checks a rules file. One bad entry stops it, and
-  the last published list stays.
+- The pull request's check runs Floorbit's own checks and writes a summary: what each application
+  adds, and which of its domains also count for another application. A shared CDN or a service many
+  games use (anti-cheat, captcha) fails it, because it would count for this application only.
+- One bad file stops the build, and the last published list stays.
 
 ## Setting it up (once)
 
